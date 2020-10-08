@@ -29,7 +29,7 @@ Hardware drivers:
 DALLAS1.PRG
   Supports various ROM based dallas chips such as 1216E, 1216F or 1315
   in ROM mode.
-  It assumes A1 is used for data input and either A2 or A3 is used for /CE
+  It assumes A1 is used for data input and either A2 or A3 is used for /WE
   The Dallas can be located in cartridge port or any of the TOS ROM sockets.
 
 
