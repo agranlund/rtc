@@ -115,7 +115,7 @@ main:
 
 	move.l	d0,-(sp)
 
-	bsr		devGetTime				; get date/time
+	bsr		devGetTime			; get date/time
 
 	move.l	d0,-(sp)
 	move.w	#43,-(sp)			; set gemdos date
@@ -189,11 +189,8 @@ saveConfig:
 
 ;--------------------------------------------------------------
 getCookie:
-; input:
-;	d0.l: cookie
-; returns:
-;	d0.w: exists? 0 or 1
-;	d1.l: value
+; value of cookie d0 is returned in d1.
+; returns d0=1 if cookie exists, 0 if not
 ;--------------------------------------------------------------
 	move.l	$5a0,d2				; has cookies?
 	beq		.l3
@@ -212,26 +209,54 @@ getCookie:
 	rts
 
 ;--------------------------------------------------------------
-setCookie:
-; input:
-;	d0.l: cookie
-;	d1.l: value
+setCookie:	
+; create/update cookie d0 with value d1
+; will resize or create jar as needed
 ;--------------------------------------------------------------
-	move.l	$5a0,d2				; has cookies?
-	beq	.l3
-	move.l	d2,a0
-	moveq	#1,d3
-.l1 tst.l	(a0)				; end of cookies?
-	beq	.l2
-	addq.l	#1,d3
-	addq.l	#8,a0
-	bra	.l1
-.l2 move.l	4(a0),d2
-	cmp.l	d2,d3				; full?
-	bcc.s	.l3
-	move.l	d0,0(a0)			; add our cookie
-	move.l	d1,4(a0)
-	move.l	#0,8(a0)			; add end cookie
-	move.l	d2,12(a0)
-.l3 rts
+	move.l	d0,d3				; d3 = cookie
+	move.l	d1,d4				; d4 = value
+	moveq.l	#1,d5				; d5 = end cookie slot
+	moveq.l	#0,d6				; d6 = jar total size
+	movea.l	$5a0,a3				; a3 = current slot ptr
+	move.l	a3,a4				; a4 = jar start ptr
+	cmp.l	#0,a3
+	beq		.create
+.size
+	tst.l	(a3)				; end cookie?
+	beq		.l1
+	cmp.l	(a3),d3				; exist?
+	beq		.update
+	addq.l	#1,d5
+	addq.l	#8,a3
+	bra		.size
+.l1 move.l	4(a3),d6
+	cmp.l	d6,d5				; jar full?
+	bcs.s	.write
+.create
+	add.l	#20,d6				; add 20 slots
+	move.l	d6,d0
+	lsl.l	#3,d0				; 8 bytes per slot
+	move.l	d0,-(sp)
+	move.w	#72,-(sp)
+	trap	#1					; allocate
+	addq.l	#6,sp
+	cmp.l	#0,d0				; failed?
+	beq		.end
+	move.l	d0,a3				; copy old
+	move.l	d5,d1
+.l2	cmp.l	#1,d1
+	beq		.l3
+	move.l	(a4)+,(a3)+
+	move.l	(a4)+,(a3)+
+	subq.l	#1,d1
+	bra		.l2
+.l3 move.l	d0,$5a0				; set new jar
+.write							; update jar
+	move.l	#0,8(a3)			; add end cookie
+	move.l	d6,12(a3)
+.update
+	move.l	d3,0(a3)			; add new cookie
+	move.l	d4,4(a3)
+.end
+	rts
 

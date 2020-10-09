@@ -8,28 +8,29 @@ These files are distributed under the GPL v2, or at your option any
 later version.  See LICENSE.TXT for details.
 
 (c)2020, Anders Granlund
-Anders Granlund, 2019
 ----------------------------------------------------------------------------
 
 How to use: Put driver in your AUTO folder.
 
-These drivers are meant to work with TOS and the normal TOS applications
-for setting the time such as XControl.
+These drivers are meant to work seamlessly with any TOS and the
+Atari applications for setting time and date, for example XControl.
 
-Using other clock drivers, fixes or 3rd party applications at the
-same time may cause interference. Especially those that rely on the IKBD
-and sets the year back and forth to compensate.
+Note: Using other clock drivers, y2k type fixes or 3rd party Dallas
+applications for setting time may cause interference. Especially those
+that rely on the IKBD and sets the year back and forth to compensate.
 
-Tested with a FMC-II cartridge under TOS2.06 and EmuTOS1.0.
+
+It has been tested with a "Forget Me Clock II" cartridge under
+TOS 1.04, 1.62, 2.06 and EmuTOS, as well as FreeMiNT and MagiC.
 Your milage may vary.
 
 ----------------------------------------------------------------------------
 Hardware drivers:
 ----------------------------------------------------------------------------
 DALLAS1.PRG
-  Supports various ROM based dallas chips such as 1216E, 1216F or 1315
-  in ROM mode.
-  It assumes A1 is used for data input and either A2 or A3 is used for /WE
+  Supports various ROM based dallas chips such as DS1216E, DS1216F,
+  DS1315 in ROM mode or similar chips.
+  It assumes A1 is used as data input and either A2 or A3 as /WE
   The Dallas can be located in cartridge port or any of the TOS ROM sockets.
 
 
