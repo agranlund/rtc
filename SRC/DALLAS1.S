@@ -20,16 +20,25 @@ DEV_BASE_ADDR		EQU	$00000000	; autodetect
 DEV_WRITE_ADDR		EQU	$00000001	; A1	-->	D
 DEV_READ_ADDR		EQU	$0000000C	; A2 or A3 --> /CE
 DEV_NVRAM_SIZE		EQU	$00000000	;
-DEV_CONF4			EQU	$00000000	;
-DEV_CONF5			EQU	$00000000	;
-DEV_CONF6			EQU	$00000005	; autodetect delay
-DEV_CONF7			EQU	$00000000	; last found addr
+DEV_CONF4		EQU	$00000000	;
+DEV_CONF5		EQU	$00000000	;
+DEV_CONF6		EQU	$00000005	; autodetect delay
+DEV_CONF7		EQU	$00000000	; last found addr
 
 CONF_DETECT_DELAY	EQU	6*4
 CONF_PREF_ADDR		EQU	7*4
 
 
 	include "CORE.S"
+
+DI	MACRO
+	move.w	sr,-(sp)
+	ori.w	#$700,sr
+	ENDM
+
+EI	MACRO
+	move.w	(sp)+,sr
+	ENDM
 
 
 section data
@@ -58,20 +67,21 @@ section text
 devInit:		; a0 = config, d0 = return status
 ;--------------------------------------------------------------
 	move.l	(a0),a0
-	bsr		dsDetect	; detect chip
+	bsr	dsDetect	; detect chip
 	cmp.l	#0,d0
-	bne		.found
+	bne	.found
 	moveq.l	#0,d0
-	rts
-.found
-	rts
+.found	rts
+
 
 ;--------------------------------------------------------------
 devGetTime:	 ; d0 = return
 ;--------------------------------------------------------------
+	DI
 	bsr	dsOpen
 	bsr	dsReadRegs
-	
+	EI
+
 	moveq	#0,d7	; year
 	rol.l	#4,d1
 	move.l	d1,d2
@@ -252,19 +262,26 @@ devSetTime:	 ; d0 = input
 
 	move.l	d6,d0
 	move.l	d7,d1
-	bsr		dsOpen
-	bsr		dsWriteRegs
+
+	DI
+	bsr	dsOpen
+	bsr	dsWriteRegs
+	EI
 	rts
 
 
 ;--------------------------------------------------------------
 devReadNVram:	; a0 = buffer, d0 = start, d1 = length
 ;--------------------------------------------------------------
+	DI
+	EI
 	rts
 
 ;--------------------------------------------------------------
 devWriteNVram:	 ; a0 = buffer, d0 = start, d1 = length
 ;--------------------------------------------------------------
+	DI
+	EI
 	rts
 
 ;--------------------------------------------------------------
@@ -283,16 +300,15 @@ dsSetAddr:		; d0 = base addr
 dsDetect:		; d0 = base address in/out
 ;--------------------------------------------------------------
 	cmp.l	#0,d0
-	beq		dsAutoDetect
-	bsr		dsCheckDevice
-	bne		.found
-	bsr		dsInitDevice
-	bsr		dsCheckDevice
-	bne		.found	
+	beq	dsAutoDetect
+	bsr	dsCheckDevice
+	bne	.found
+	bsr	dsInitDevice
+	bsr	dsCheckDevice
+	bne	.found	
 	moveq	#0,d0
 	rts
-.found
-	move.l	gWriteAddr,d0
+.found	move.l	gWriteAddr,d0
 	rts
 
 dsAutoDetect:
@@ -300,40 +316,40 @@ dsAutoDetect:
 	movea.l	#dsAutoDetectPref,a1
 	move.l	d0,(a1)
 	cmp.l	#0,d0
-	bne		.l1
+	bne	.l1
 	add.l	#4,a1
-.l1 move.l	(a1)+,d0
+.l1 	move.l	(a1)+,d0
 	cmp.l	#0,d0
-	beq		.l2
-	bsr		dsCheckDevice
-	bne		.l7
-	bra		.l1
-.l2 movea.l	#dsAutoDetectAddr,a1	; found nothing
-.l3 move.l	(a1)+,d0				; it may be switched off so
-	cmp.l	#0,d0					; reinitialize and try again
-	beq		.l4
-	bsr		dsInitDevice
-	bra		.l3
-.l4 movea.l	#dsAutoDetectAddr,a1	; again now
-.l5 move.l	(a1)+,d0
+	beq	.l2
+	bsr	dsCheckDevice
+	bne	.l7
+	bra	.l1
+.l2 	movea.l	#dsAutoDetectAddr,a1	; found nothing
+.l3 	move.l	(a1)+,d0		; it may be switched off so
+	cmp.l	#0,d0			; reinitialize and try again
+	beq	.l4
+	bsr	dsInitDevice
+	bra	.l3
+.l4 	movea.l	#dsAutoDetectAddr,a1	; again now
+.l5 	move.l	(a1)+,d0
 	cmp.l	#0,d0
-	beq		.l6
-	bsr		dsCheckDevice
-	bne		.l7
-	bra		.l5
-.l6 moveq	#0,d0
+	beq	.l6
+	bsr	dsCheckDevice
+	bne	.l7
+	bra	.l5
+.l6 	moveq	#0,d0
 	rts
-.l7 move.l	-(a1),d0
+.l7 	move.l	-(a1),d0
 	move.l	dsAutoDetectPref,d1
 	cmp.l	d0,d1
-	bne		dsUpdateAutoDetectPref
+	bne	dsUpdateAutoDetectPref
 	rts
 
 dsUpdateAutoDetectPref:
 	move.l	d0,-(sp)
 	move.l	d0,dsAutoDetectPref
 	move.l	d0,config+CONF_PREF_ADDR
-	bsr		saveConfig
+	bsr	saveConfig
 	move.l	(sp)+,d0
 	rts
 
@@ -341,33 +357,37 @@ dsCheckDevice:
 	move.l	sp,a6
 	move.l	$8,gBusError
 	move.l	#.except,$8
-	bsr		dsSetAddr
-	bsr		dsOpen
-	bsr		dsReadRegs
+	bsr	dsSetAddr
+	DI
+	bsr	dsOpen
+	bsr	dsReadRegs
+	EI
 	move.l	d0,d2
 	move.l	$4ba,d1
 	add.l	config+CONF_DETECT_DELAY,d1
-.l1 move.l	$4ba,d0
+.l1 	move.l	$4ba,d0
 	cmp.l	d0,d1
-	bhi		.l1
-	bsr		dsOpen
-	bsr		dsReadRegs
-.done:
-	cmp.l	d0,d2
+	bhi	.l1
+	DI	
+	bsr	dsOpen
+	bsr	dsReadRegs
+	EI
+.done	cmp.l	d0,d2
 	rts
-.except
-	move.l	a6,sp
+.except	move.l	a6,sp
 	moveq	#0,d0
 	moveq	#0,d1
 	move.l	gBusError,$8
-	bra		.done
+	bra	.done
 
 dsInitDevice:
-	bsr		dsSetAddr
-	bsr		dsOpen
+	DI
+	bsr	dsSetAddr
+	bsr	dsOpen
 	move.l	#$00000000,d0
 	move.l	#$01010111,d1
-	bsr		dsWriteRegs
+	bsr	dsWriteRegs
+	EI
 	rts
 
 
@@ -376,10 +396,10 @@ dsInitDevice:
 dsOpen:
 ;--------------------------------------------------------------
 	movem.l	d0-d1,-(sp)
-	bsr		dsReadRegs			; flush open transmissions
+	bsr	dsReadRegs		; flush open transmissions
 	move.l	#$5CA33AC5,d0		; write magic to reopen
 	move.l	d0,d1
-	bsr		dsWriteRegs
+	bsr	dsWriteRegs
 	movem.l (sp)+,d0-d1
 	rts
 
@@ -390,12 +410,12 @@ dsReadRegs:		; d1=7-4, d0=3-0
 	movea.l (gReadAddr),a0	 	; a0 = read address
 	moveq	#0,d0
 	moveq	#0,d1
-	moveq	#63,d2		 		; d2 = bit counter
-.l1 move.b	(a0),d3				; d3 = temp data
+	moveq	#63,d2	 		; d2 = bit counter
+.l1 	move.b	(a0),d3			; d3 = temp data
 	roxr.b	#1,d3
 	roxr.l	#1,d1
 	roxr.l	#1,d0
-	dbf		d2,.l1
+	dbf	d2,.l1
 	movem.l (sp)+,d2-d3/a0
 	rts
 
@@ -404,21 +424,21 @@ dsWriteRegs:	 ; d1=7-4, d0=3-0
 ;--------------------------------------------------------------
 	movem.l d0-d5/a0,-(sp)
 	movea.l (gWriteAddr),a0		; a0 = write address
-	move.l	gDataPin,d2	 		; d2 = data pin
-	moveq	#31,d5		 		; d5 = bit counter
-.l1 move.w	d0,d3				; d3 = temp data
+	move.l	gDataPin,d2	 	; d2 = data pin
+	moveq	#31,d5		 	; d5 = bit counter
+.l1 	move.w	d0,d3			; d3 = temp data
 	ror.l	#1,d0
-	and.w	#1,d3				; bit to write
-	lsl.w	d2,d3				; shift into position
-	move.b	(a0,d3),d4			; read to write
-	dbf		d5,.l1
-	moveq	#31,d5		 		; d5 = bit counter
-.l2 move.w	d1,d3
+	and.w	#1,d3			; bit to write
+	lsl.w	d2,d3			; shift into position
+	move.b	(a0,d3),d4		; read to write
+	dbf	d5,.l1
+	moveq	#31,d5		 	; d5 = bit counter
+.l2 	move.w	d1,d3
 	ror.l	#1,d1
-	and.w	#1,d3				; bit to write
-	lsl.w	d2,d3				; shift into position
-	move.b	(a0,d3),d4			; read to write
-	dbf		d5,.l2
+	and.w	#1,d3			; bit to write
+	lsl.w	d2,d3			; shift into position
+	move.b	(a0,d3),d4		; read to write
+	dbf	d5,.l2
 	movem.l (sp)+,d0-d5/a0
 	rts
 
