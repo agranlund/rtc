@@ -66,7 +66,7 @@ startup:
 	move.l	4(sp),a0		; a0 = basepage
 	lea	gStack(pc),sp		; initalize stack
 	move.l	#100,d0			; basepage size
-	add.l	#$1000,d0		; 
+	add.l	#$1000,d0		;
 	add.l	$c(a0),d0		; text size
 	add.l	$14(a0),d0		; data size
 	add.l	$1c(a0),d0		; bss size
@@ -83,7 +83,7 @@ startup:
 	pea	(a0)
 	move.w	#38,-(sp)
 	trap	#14
-	addq.l	#6,sp		
+	addq.l	#6,sp
 	tst.w	d0			; check return code from main
 	beq	.fail			; 0 = exit normally
 
@@ -94,7 +94,7 @@ startup:
 	trap	#1
 	addq.l	#8,sp
 .fail	move.w	#0,-(sp)
-	move.w	#76,-(sp) 
+	move.w	#76,-(sp)
 	trap	#1
 	addq.l	#4,sp
 
@@ -207,7 +207,7 @@ getCookie:
 	rts
 
 ;--------------------------------------------------------------
-setCookie:	
+setCookie:
 ; create/update cookie d0 with value d1
 ; will resize or create jar as needed
 ;--------------------------------------------------------------
@@ -254,4 +254,3 @@ setCookie:
 	move.l	d3,0(a3)		; add new cookie
 	move.l	d4,4(a3)
 .end	rts
-
