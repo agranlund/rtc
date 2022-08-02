@@ -19,10 +19,10 @@ DEV_CONF5	EQU	$00000000
 DEV_CONF6	EQU	$00000000
 DEV_CONF7	EQU	$00000000
 
-	include "CORE.S"
+	include "Core.s"
 
 section text
-	
+
 ;--------------------------------------------------------------
 devInit:			; d0 = return status, 0 = failed
 ;--------------------------------------------------------------

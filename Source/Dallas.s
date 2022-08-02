@@ -29,7 +29,7 @@ CONF_DETECT_DELAY	EQU	6*4
 CONF_PREF_ADDR		EQU	7*4
 
 
-	include "CORE.S"
+	include "Core.s"
 
 DI	MACRO
 	move.w	sr,-(sp)
@@ -230,7 +230,7 @@ devSetTime:	 ; d0 = input
 	or.l	d2,d7
 	ror.l	#4,d7
 	lsr.l	#5,d0
-	
+
 	move.l	d0,d1	; month
 	and.l	#$F,d1
 	divu.w	#10,d1
@@ -305,7 +305,7 @@ dsDetect:		; d0 = base address in/out
 	bne	.found
 	bsr	dsInitDevice
 	bsr	dsCheckDevice
-	bne	.found	
+	bne	.found
 	moveq	#0,d0
 	rts
 .found	move.l	gWriteAddr,d0
@@ -368,7 +368,7 @@ dsCheckDevice:
 .l1 	move.l	$4ba,d0
 	cmp.l	d0,d1
 	bhi	.l1
-	DI	
+	DI
 	bsr	dsOpen
 	bsr	dsReadRegs
 	EI
@@ -441,7 +441,3 @@ dsWriteRegs:	 ; d1=7-4, d0=3-0
 	dbf	d5,.l2
 	movem.l (sp)+,d0-d5/a0
 	rts
-
-
-
-
