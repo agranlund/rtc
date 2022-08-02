@@ -1,5 +1,5 @@
 
-# Atari Realtime Clock Driver   [![Badge License]][License]
+# Atari Realtime Clock Driver    [![Badge License]][License]
 
 *Extensible driver system for real time clock upgrades.*
 
@@ -21,7 +21,7 @@ applications for setting date / time, such as `XControl`.
 <br>
 <br>
 
-## ⚠ Caution ⚠
+## ⚠  Caution  ⚠
 
 Using other clock drivers, y2k fixes or 3rd party **Dallas** <br>
 applications for setting time may cause problems.
